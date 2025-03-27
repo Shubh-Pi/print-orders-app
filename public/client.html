@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Place Your Print Order</title>
+  <script>
+    async function loadSubjects() {
+      const response = await fetch('/api/subjects');
+      const subjects = await response.json();
+      let html = '';
+      subjects.forEach(subject => {
+        html += `<h3>${subject.title}</h3>`;
+        html += `<p>${subject.description}</p>`;
+        html += '<ul>';
+        subject.outputs.forEach(output => {
+          if (output.isAvailable) {
+            html += `<li>
+                      ${output.label} - $${output.price} 
+                      <button onclick="selectOutput('${subject._id}', '${output._id}', ${output.price})">Select</button>
+                    </li>`;
+          } else {
+            html += `<li>${output.label} - Not Available</li>`;
+          }
+        });
+        html += '</ul>';
+      });
+      document.getElementById('subjects').innerHTML = html;
+    }
+
+    let selectedSubjectId = '';
+    let selectedOutputId = '';
+    let selectedPrice = 0;
+
+    function selectOutput(subjectId, outputId, price) {
+      selectedSubjectId = subjectId;
+      selectedOutputId = outputId;
+      selectedPrice = price;
+      document.getElementById('selectedOutput').innerText = 'Selected output price: $' + price;
+      calculateTotal();
+    }
+
+    function calculateTotal() {
+      const qty = document.getElementById('quantity').value;
+      const total = qty * selectedPrice;
+      document.getElementById('totalPayment').innerText = 'Total Payment: $' + total;
+    }
+
+    async function submitOrder() {
+      const clientName = document.getElementById('clientName').value;
+      const quantity = parseInt(document.getElementById('quantity').value);
+      const rubric = document.getElementById('rubric').value;
+      const totalPayment = quantity * selectedPrice;
+
+      const order = {
+        clientName,
+        subject: selectedSubjectId,
+        output: selectedOutputId,
+        quantity,
+        rubric,
+        totalPayment
+      };
+
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(order)
+      });
+      const result = await response.json();
+      alert('Order submitted successfully!');
+    }
+
+    window.onload = loadSubjects;
+  </script>
+</head>
+<body>
+  <h1>Place Your Print Order</h1>
+  <div id="subjects"></div>
+  <div>
+    <h2>Order Details</h2>
+    <label>Client Name: <input type="text" id="clientName" /></label><br/>
+    <label>Quantity: <input type="number" id="quantity" value="1" onchange="calculateTotal()" /></label><br/>
+    <label>Rubric (optional): <input type="text" id="rubric" /></label><br/>
+    <div id="selectedOutput"></div>
+    <div id="totalPayment"></div>
+    <button onclick="submitOrder()">Submit Order</button>
+  </div>
+</body>
+</html>
