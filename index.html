@@ -7,7 +7,136 @@
 <body>
   <h1>Place Your Print Order</h1>
   <form id="orderForm">
+    <label for="su<!DOCTYPE html>
+<html>
+<head>
+  <title>Print Order Request</title>
+  <meta charset="UTF-8">
+  <style>
+    /* Hide the rubric count input by default */
+    #rubricCountContainer {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Place Your Print Order</h1>
+  <form id="orderForm">
     <label for="subject">Subject:</label>
+    <select id="subject" name="subject"></select><br><br>
+
+    <label for="output">Output:</label>
+    <select id="output" name="output"></select><br><br>
+
+    <label for="quantity">Quantity:</label>
+    <input type="number" id="quantity" name="quantity" value="1" min="1"><br><br>
+
+    <label for="rubric">Rubric Required:</label>
+    <input type="checkbox" id="rubric" name="rubric"><br><br>
+
+    <div id="rubricCountContainer">
+      <label for="rubricCount">No. of Rubrics Needed:</label>
+      <input type="number" id="rubricCount" name="rubricCount" value="1" min="1"><br><br>
+    </div>
+
+    <div id="totalPayment">Total Payment: $0</div><br>
+
+    <button type="submit">Submit Order</button>
+  </form>
+
+  <script>
+    // Update this URL to your deployed Worker’s API endpoint.
+    const API_URL = 'https://api.your-domain.workers.dev';
+
+    // Load subjects from the API
+    async function loadSubjects() {
+      const res = await fetch(API_URL + '/api/subjects');
+      const subjects = await res.json();
+      const subjectSelect = document.getElementById('subject');
+      subjects.forEach(s => {
+        const option = document.createElement('option');
+        option.value = s;
+        option.textContent = s;
+        subjectSelect.appendChild(option);
+      });
+      loadOutputs(subjectSelect.value);
+    }
+
+    // Load outputs for the selected subject
+    async function loadOutputs(subject) {
+      const res = await fetch(API_URL + '/api/outputs?subject=' + encodeURIComponent(subject));
+      const outputs = await res.json();
+      const outputSelect = document.getElementById('output');
+      outputSelect.innerHTML = '';
+      outputs.forEach(o => {
+        const option = document.createElement('option');
+        option.value = o.id;
+        option.textContent = o.name + ' ($' + o.price + ')';
+        option.dataset.price = o.price;
+        // Disable option if output is not available
+        option.disabled = !o.available;
+        outputSelect.appendChild(option);
+      });
+      calculatePayment();
+    }
+
+    // Calculate and display total payment
+    function calculatePayment() {
+      const outputSelect = document.getElementById('output');
+      const selectedOption = outputSelect.options[outputSelect.selectedIndex];
+      const price = parseFloat(selectedOption.dataset.price || '0');
+      const quantity = parseInt(document.getElementById('quantity').value || '1');
+      
+      // For demonstration, assume rubric does not affect price.
+      const total = price * quantity;
+      document.getElementById('totalPayment').textContent = 'Total Payment: $' + total.toFixed(2);
+    }
+
+    // Toggle rubric count field when rubric checkbox is changed
+    document.getElementById('rubric').addEventListener('change', (e) => {
+      const rubricCountContainer = document.getElementById('rubricCountContainer');
+      if(e.target.checked) {
+        rubricCountContainer.style.display = 'block';
+      } else {
+        rubricCountContainer.style.display = 'none';
+      }
+    });
+
+    document.getElementById('subject').addEventListener('change', e => {
+      loadOutputs(e.target.value);
+    });
+    document.getElementById('output').addEventListener('change', calculatePayment);
+    document.getElementById('quantity').addEventListener('input', calculatePayment);
+
+    document.getElementById('orderForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const order = {
+        subject: document.getElementById('subject').value,
+        output: document.getElementById('output').value,
+        quantity: parseInt(document.getElementById('quantity').value),
+        rubric: document.getElementById('rubric').checked,
+        rubricCount: document.getElementById('rubric').checked 
+                      ? parseInt(document.getElementById('rubricCount').value)
+                      : 0
+      };
+      const res = await fetch(API_URL + '/api/order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(order)
+      });
+      const result = await res.json();
+      if (result.success) {
+        alert('Order placed successfully. Order ID: ' + result.orderId);
+      } else {
+        alert('Error placing order: ' + result.error);
+      }
+    });
+
+    loadSubjects();
+  </script>
+</body>
+</html>
+bject">Subject:</label>
     <select id="subject" name="subject"></select><br><br>
 
     <label for="output">Output:</label>
