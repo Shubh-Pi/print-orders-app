@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin - Print Orders</title>
+  <meta charset="UTF-8">
+</head>
+<body>
+  <h1>Admin Panel - Orders</h1>
+  <table border="1" id="ordersTable">
+    <thead>
+      <tr>
+        <th>Order ID</th>
+        <th>Subject</th>
+        <th>Output</th>
+        <th>Quantity</th>
+        <th>Rubric</th>
+        <th>Payment Received</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    // Update this URL to your Worker API endpoint.
+    const API_URL = 'https://api.your-domain.workers.dev';
+
+    // Load orders from the Worker API
+    async function loadOrders() {
+      const res = await fetch(API_URL + '/api/orders');
+      const orders = await res.json();
+      const tbody = document.getElementById('ordersTable').querySelector('tbody');
+      tbody.innerHTML = '';
+      orders.forEach(order => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${order.id}</td>
+          <td>${order.subject}</td>
+          <td>${order.output}</td>
+          <td>${order.quantity}</td>
+          <td>${order.rubric ? 'Yes' : 'No'}</td>
+          <td>${order.paymentReceived ? 'Yes' : 'No'}</td>
+          <td>${order.paymentReceived ? '' : '<button onclick="markPaid(\\'' + order.id + '\\')">Mark as Paid</button>'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Mark an order as paid via the Worker API
+    async function markPaid(orderId) {
+      const res = await fetch(API_URL + '/api/orders/' + orderId + '/markpaid', {
+        method: 'POST'
+      });
+      const result = await res.json();
+      if(result.success) {
+        alert('Order marked as paid');
+        loadOrders();
+      } else {
+        alert('Error marking order as paid');
+      }
+    }
+
+    loadOrders();
+  </script>
+</body>
+</html>
