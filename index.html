@@ -144,21 +144,30 @@
     });
     
     // --- Registration Form ---
-    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+    document.getElementById('clientRegistrationForm').addEventListener('submit', async function(e) {
       e.preventDefault();
-      const email = document.getElementById('regEmail').value;
-      const password = document.getElementById('regPassword').value;
-      const res = await fetch(API_URL + '/api/client/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      const result = await res.json();
-      if (result.success) {
-        alert('Registration successful! Please login.');
-        showSection('loginSection');
-      } else {
-        alert('Registration failed: ' + result.error);
+      console.log("Register button clicked");
+      
+      const email = document.getElementById('clientEmail').value;
+      const password = document.getElementById('clientPassword').value;
+      console.log("Email:", email, "Password:", password);
+      
+      try {
+        const response = await fetch(API_URL + '/api/client/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const result = await response.json();
+        console.log("API Response:", result);
+        if(result.success) {
+          alert("Registration successful!");
+        } else {
+          alert("Registration failed: " + (result.error || "Unknown error"));
+        }
+      } catch (error) {
+        console.error("Error during registration:", error);
+        alert("Registration error: " + error.message);
       }
     });
     
