@@ -1,49 +1,233 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Print Order Request</title>
+  <title>Client Portal - Print Orders</title>
   <meta charset="UTF-8">
   <style>
-    /* Hide the rubric count input by default */
-    #rubricCountContainer {
+    /* Simple styling to hide sections */
+    #orderSection, #registrationSection, #recoverySection {
+      display: none;
+    }
+    .hidden {
       display: none;
     }
   </style>
 </head>
 <body>
-  <h1>Place Your Print Order</h1>
-  <form id="orderForm">
-    <label for="subject">Subject:</label>
-    <select id="subject" name="subject"></select><br><br>
+  <h1>Client Portal</h1>
+  
+  <!-- Login Form -->
+  <div id="loginSection">
+    <h2>Login</h2>
+    <form id="loginForm">
+      <label for="loginEmail">Email:</label>
+      <input type="email" id="loginEmail" name="loginEmail" placeholder="your-email@domain.com" required><br><br>
+      <label for="loginPassword">Password:</label>
+      <input type="password" id="loginPassword" name="loginPassword" required><br><br>
+      <button type="submit">Login</button>
+    </form>
+    <p>
+      Not registered? <a href="#" id="showRegister">Register here</a>.
+    </p>
+    <p>
+      Forgot password? <a href="#" id="showRecovery">Recover account</a>.
+    </p>
+  </div>
+  
+  <!-- Registration Form -->
+  <div id="registrationSection">
+    <h2>Register</h2>
+    <form id="registerForm">
+      <label for="regEmail">Email:</label>
+      <input type="email" id="regEmail" name="regEmail" placeholder="your-email@domain.com" required><br><br>
+      <label for="regPassword">Password:</label>
+      <input type="password" id="regPassword" name="regPassword" required><br><br>
+      <button type="submit">Register</button>
+    </form>
+    <p>
+      Already have an account? <a href="#" id="showLoginFromReg">Login here</a>.
+    </p>
+  </div>
+  
+  <!-- Account Recovery Form -->
+  <div id="recoverySection">
+    <h2>Account Recovery</h2>
+    <form id="recoveryRequestForm">
+      <label for="recoverEmail">Email:</label>
+      <input type="email" id="recoverEmail" name="recoverEmail" placeholder="your-email@domain.com" required><br><br>
+      <button type="submit">Send Recovery Code</button>
+    </form>
+    <br>
+    <form id="recoveryVerifyForm">
+      <label for="recoverCode">Recovery Code:</label>
+      <input type="text" id="recoverCode" name="recoverCode" required><br><br>
+      <label for="newPassword">New Password:</label>
+      <input type="password" id="newPassword" name="newPassword" required><br><br>
+      <button type="submit">Reset Password</button>
+    </form>
+    <p>
+      Back to <a href="#" id="showLoginFromRec">Login</a>.
+    </p>
+  </div>
+  
+  <!-- Order Form Section -->
+  <div id="orderSection">
+    <h2>Place Your Print Order</h2>
+    <form id="orderForm">
+      <label for="subject">Subject:</label>
+      <select id="subject" name="subject"></select><br><br>
 
-    <label for="output">Output:</label>
-    <select id="output" name="output"></select><br><br>
+      <label for="output">Output:</label>
+      <select id="output" name="output"></select><br><br>
 
-    <label for="quantity">Quantity:</label>
-    <input type="number" id="quantity" name="quantity" value="1" min="1"><br><br>
+      <label for="quantity">Quantity:</label>
+      <input type="number" id="quantity" name="quantity" value="1" min="1"><br><br>
 
-    <label for="rubric">Rubric Required:</label>
-    <input type="checkbox" id="rubric" name="rubric"><br><br>
+      <label for="rubric">Rubric Required:</label>
+      <input type="checkbox" id="rubric" name="rubric"><br><br>
 
-    <div id="rubricCountContainer">
-      <label for="rubricCount">No. of Rubrics Needed:</label>
-      <input type="number" id="rubricCount" name="rubricCount" value="1" min="1"><br><br>
-    </div>
+      <div id="rubricCountContainer" style="display: none;">
+        <label for="rubricCount">No. of Rubrics Needed:</label>
+        <input type="number" id="rubricCount" name="rubricCount" value="1" min="1"><br><br>
+      </div>
 
-    <div id="totalPayment">Total Payment: $0</div><br>
+      <div id="totalPayment">Total Payment: $0</div><br>
 
-    <button type="submit">Submit Order</button>
-  </form>
-
+      <button type="submit">Submit Order</button>
+    </form>
+    <button id="logoutButton">Logout</button>
+  </div>
+  
   <script>
-    // Update this URL to your deployed Worker’s API endpoint.
+    // Update this URL to point to your Cloudflare Worker API endpoint.
     const API_URL = 'https://api.your-domain.workers.dev';
-
-    // Load subjects from the API
+    
+    // Utility: Show/hide sections.
+    function showSection(sectionId) {
+      document.getElementById('loginSection').style.display = 'none';
+      document.getElementById('registrationSection').style.display = 'none';
+      document.getElementById('recoverySection').style.display = 'none';
+      document.getElementById('orderSection').style.display = 'none';
+      document.getElementById(sectionId).style.display = 'block';
+    }
+    
+    // On page load, check if client is logged in
+    window.onload = () => {
+      const token = localStorage.getItem('clientToken');
+      if (token) {
+        showSection('orderSection');
+        loadSubjects();
+      } else {
+        showSection('loginSection');
+      }
+    };
+    
+    // --- Login Form ---
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      const res = await fetch(API_URL + '/api/client/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const result = await res.json();
+      if (result.success) {
+        localStorage.setItem('clientToken', result.token);
+        alert('Login successful!');
+        showSection('orderSection');
+        loadSubjects();
+      } else {
+        alert('Login failed: ' + result.error);
+      }
+    });
+    
+    // --- Registration Form ---
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('regEmail').value;
+      const password = document.getElementById('regPassword').value;
+      const res = await fetch(API_URL + '/api/client/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const result = await res.json();
+      if (result.success) {
+        alert('Registration successful! Please login.');
+        showSection('loginSection');
+      } else {
+        alert('Registration failed: ' + result.error);
+      }
+    });
+    
+    // --- Account Recovery: Request Recovery Code ---
+    document.getElementById('recoveryRequestForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('recoverEmail').value;
+      const res = await fetch(API_URL + '/api/client/recover/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const result = await res.json();
+      if (result.success) {
+        alert(result.message);
+      } else {
+        alert('Recovery request failed: ' + result.error);
+      }
+    });
+    
+    // --- Account Recovery: Verify Code and Reset Password ---
+    document.getElementById('recoveryVerifyForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('recoverEmail').value;
+      const code = document.getElementById('recoverCode').value;
+      const newPassword = document.getElementById('newPassword').value;
+      const res = await fetch(API_URL + '/api/client/recover/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code, newPassword })
+      });
+      const result = await res.json();
+      if (result.success) {
+        alert('Password reset successful. Please login with your new password.');
+        showSection('loginSection');
+      } else {
+        alert('Recovery verification failed: ' + result.error);
+      }
+    });
+    
+    // Navigation links
+    document.getElementById('showRegister').addEventListener('click', () => {
+      showSection('registrationSection');
+    });
+    document.getElementById('showLoginFromReg').addEventListener('click', () => {
+      showSection('loginSection');
+    });
+    document.getElementById('showRecovery').addEventListener('click', () => {
+      showSection('recoverySection');
+    });
+    document.getElementById('showLoginFromRec').addEventListener('click', () => {
+      showSection('loginSection');
+    });
+    
+    // Logout button
+    document.getElementById('logoutButton').addEventListener('click', () => {
+      localStorage.removeItem('clientToken');
+      alert('Logged out successfully.');
+      showSection('loginSection');
+    });
+    
+    // --- Order Form Functions ---
+    
+    // Load available subjects from the API
     async function loadSubjects() {
       const res = await fetch(API_URL + '/api/subjects');
       const subjects = await res.json();
       const subjectSelect = document.getElementById('subject');
+      subjectSelect.innerHTML = '';
       subjects.forEach(s => {
         const option = document.createElement('option');
         option.value = s;
@@ -52,7 +236,7 @@
       });
       loadOutputs(subjectSelect.value);
     }
-
+    
     // Load outputs for the selected subject
     async function loadOutputs(subject) {
       const res = await fetch(API_URL + '/api/outputs?subject=' + encodeURIComponent(subject));
@@ -64,55 +248,51 @@
         option.value = o.id;
         option.textContent = o.name + ' ($' + o.price + ')';
         option.dataset.price = o.price;
-        // Disable option if output is not available
         option.disabled = !o.available;
         outputSelect.appendChild(option);
       });
       calculatePayment();
     }
-
-    // Calculate and display total payment
+    
+    // Calculate and display total payment (if needed)
     function calculatePayment() {
       const outputSelect = document.getElementById('output');
       const selectedOption = outputSelect.options[outputSelect.selectedIndex];
       const price = parseFloat(selectedOption.dataset.price || '0');
       const quantity = parseInt(document.getElementById('quantity').value || '1');
-      
-      // For demonstration, assume rubric does not affect price.
       const total = price * quantity;
       document.getElementById('totalPayment').textContent = 'Total Payment: $' + total.toFixed(2);
     }
-
+    
     // Toggle rubric count field when rubric checkbox is changed
     document.getElementById('rubric').addEventListener('change', (e) => {
       const rubricCountContainer = document.getElementById('rubricCountContainer');
-      if(e.target.checked) {
-        rubricCountContainer.style.display = 'block';
-      } else {
-        rubricCountContainer.style.display = 'none';
-      }
+      rubricCountContainer.style.display = e.target.checked ? 'block' : 'none';
     });
-
-    document.getElementById('subject').addEventListener('change', e => {
-      loadOutputs(e.target.value);
-    });
-    document.getElementById('output').addEventListener('change', calculatePayment);
-    document.getElementById('quantity').addEventListener('input', calculatePayment);
-
-    document.getElementById('orderForm').addEventListener('submit', async e => {
+    
+    // Submit order, including client token in the header
+    document.getElementById('orderForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+      const token = localStorage.getItem('clientToken');
+      if (!token) {
+        alert('You must be logged in to place an order.');
+        return;
+      }
       const order = {
         subject: document.getElementById('subject').value,
         output: document.getElementById('output').value,
         quantity: parseInt(document.getElementById('quantity').value),
         rubric: document.getElementById('rubric').checked,
         rubricCount: document.getElementById('rubric').checked 
-                      ? parseInt(document.getElementById('rubricCount').value)
-                      : 0
+                        ? parseInt(document.getElementById('rubricCount').value)
+                        : 0
       };
       const res = await fetch(API_URL + '/api/order', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
         body: JSON.stringify(order)
       });
       const result = await res.json();
@@ -122,8 +302,6 @@
         alert('Error placing order: ' + result.error);
       }
     });
-
-    loadSubjects();
   </script>
 </body>
 </html>
