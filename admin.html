@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Admin - Print Orders</title>
+  <title>Admin - Print Orders & Content Management</title>
   <meta charset="UTF-8">
 </head>
 <body>
@@ -20,6 +20,24 @@
     </thead>
     <tbody></tbody>
   </table>
+  <hr>
+  <h2>Manage Subjects</h2>
+  <p>Enter the subjects as a JSON array. For example: ["Math", "Science", "History"]</p>
+  <textarea id="subjectsList" rows="4" cols="50"></textarea><br>
+  <button id="updateSubjects">Update Subjects</button>
+  <hr>
+  <h2>Manage Outputs for a Subject</h2>
+  <p>For a subject, enter outputs as a JSON array. Example:</p>
+  <pre>
+[
+  {"id": "1", "name": "Output 1", "price": 10, "available": true},
+  {"id": "2", "name": "Output 2", "price": 12, "available": false}
+]
+  </pre>
+  <input type="text" id="subjectForOutputs" placeholder="Subject name"><br><br>
+  <textarea id="outputsList" rows="6" cols="50"></textarea><br>
+  <button id="updateOutputs">Update Outputs</button>
+  <hr>
 
   <script>
     // Update this URL to your Worker API endpoint.
@@ -59,6 +77,53 @@
         alert('Error marking order as paid');
       }
     }
+
+    // Update subjects list via API
+    document.getElementById('updateSubjects').addEventListener('click', async () => {
+      let subjectsText = document.getElementById('subjectsList').value;
+      try {
+        const subjects = JSON.parse(subjectsText);
+        const res = await fetch(API_URL + '/api/admin/subjects', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ subjects })
+        });
+        const result = await res.json();
+        if(result.success) {
+          alert('Subjects updated successfully');
+        } else {
+          alert('Error updating subjects: ' + result.error);
+        }
+      } catch (e) {
+        alert('Invalid JSON format for subjects');
+      }
+    });
+
+    // Update outputs for a subject via API
+    document.getElementById('updateOutputs').addEventListener('click', async () => {
+      const subject = document.getElementById('subjectForOutputs').value.trim();
+      let outputsText = document.getElementById('outputsList').value;
+      if (!subject) {
+        alert('Please enter a subject name');
+        return;
+      }
+      try {
+        const outputs = JSON.parse(outputsText);
+        const res = await fetch(API_URL + '/api/admin/outputs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ subject, outputs })
+        });
+        const result = await res.json();
+        if(result.success) {
+          alert('Outputs updated successfully for ' + subject);
+        } else {
+          alert('Error updating outputs: ' + result.error);
+        }
+      } catch (e) {
+        alert('Invalid JSON format for outputs');
+      }
+    });
 
     loadOrders();
   </script>
