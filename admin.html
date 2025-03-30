@@ -1,131 +1,270 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Admin - Print Orders & Content Management</title>
   <meta charset="UTF-8">
+  <title>Admin Portal - Print Orders</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Admin Panel - Orders</h1>
-  <table border="1" id="ordersTable">
-    <thead>
-      <tr>
-        <th>Order ID</th>
-        <th>Subject</th>
-        <th>Output</th>
-        <th>Quantity</th>
-        <th>Rubric</th>
-        <th>Payment Received</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-  <hr>
-  <h2>Manage Subjects</h2>
-  <p>Enter the subjects as a JSON array. For example: ["Math", "Science", "History"]</p>
-  <textarea id="subjectsList" rows="4" cols="50"></textarea><br>
-  <button id="updateSubjects">Update Subjects</button>
-  <hr>
-  <h2>Manage Outputs for a Subject</h2>
-  <p>For a subject, enter outputs as a JSON array. Example:</p>
-  <pre>
-[
-  {"id": "1", "name": "Output 1", "price": 10, "available": true},
-  {"id": "2", "name": "Output 2", "price": 12, "available": false}
-]
-  </pre>
-  <input type="text" id="subjectForOutputs" placeholder="Subject name"><br><br>
-  <textarea id="outputsList" rows="6" cols="50"></textarea><br>
-  <button id="updateOutputs">Update Outputs</button>
-  <hr>
+  <header>
+    <h1>Admin Portal</h1>
+  </header>
+  <div class="container">
+    <!-- Login Section -->
+    <section id="loginSection">
+      <h2>Admin Login</h2>
+      <form id="adminLoginForm">
+        <label for="adminEmail">Email (must end with @nhitm.ac.in):</label>
+        <input type="email" id="adminEmail" required placeholder="admin@nhitm.ac.in">
+        <label for="adminPassword">Password:</label>
+        <input type="password" id="adminPassword" required>
+        <button type="submit">Login</button>
+      </form>
+      <p id="loginMessage"></p>
+    </section>
+
+    <!-- Dashboard Section (hidden by default) -->
+    <section id="dashboardSection" class="hidden">
+      <nav>
+        <button id="viewOrdersBtn">View Orders</button>
+        <button id="editDataBtn">Edit Subjects & Outputs</button>
+        <button id="logoutBtn">Logout</button>
+      </nav>
+      <!-- Orders View -->
+      <div id="ordersView">
+        <h2>Print Orders</h2>
+        <div class="orders-container">
+          <div>
+            <h3>Pending Orders</h3>
+            <table id="pendingOrdersTable">
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Client Email</th>
+                  <th>Subject</th>
+                  <th>Output</th>
+                  <th>Quantity</th>
+                  <th>Rubric</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div>
+            <h3>Completed Orders</h3>
+            <table id="completedOrdersTable">
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Client Email</th>
+                  <th>Subject</th>
+                  <th>Output</th>
+                  <th>Quantity</th>
+                  <th>Rubric</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit Data View -->
+      <div id="editView" class="hidden">
+        <h2>Edit Subjects & Outputs</h2>
+        <div class="edit-form">
+          <h3>Update Subjects</h3>
+          <textarea id="subjectsInput" rows="3" placeholder='["Math", "Science", "History"]'></textarea>
+          <button id="updateSubjectsBtn">Update Subjects</button>
+        </div>
+        <div class="edit-form">
+          <h3>Update Outputs for a Subject</h3>
+          <input type="text" id="subjectForOutputs" placeholder="Subject name">
+          <textarea id="outputsInput" rows="5" placeholder='[{"id": "1", "name": "Output 1", "price": 10, "available": true}]'></textarea>
+          <button id="updateOutputsBtn">Update Outputs</button>
+        </div>
+      </div>
+      <p id="dashboardMessage"></p>
+    </section>
+  </div>
 
   <script>
-    // Update this URL to your Worker API endpoint.
-    const API_URL = 'https://api.your-domain.workers.dev';
+    const API_URL = 'https://print-order-worker.balgudeshubham64.workers.dev';
 
-    // Load orders from the Worker API
-    async function loadOrders() {
-      const res = await fetch(API_URL + '/api/orders');
-      const orders = await res.json();
-      const tbody = document.getElementById('ordersTable').querySelector('tbody');
-      tbody.innerHTML = '';
-      orders.forEach(order => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${order.id}</td>
-          <td>${order.subject}</td>
-          <td>${order.output}</td>
-          <td>${order.quantity}</td>
-          <td>${order.rubric ? 'Yes' : 'No'}</td>
-          <td>${order.paymentReceived ? 'Yes' : 'No'}</td>
-          <td>${order.paymentReceived ? '' : '<button onclick="markPaid(\\'' + order.id + '\\')">Mark as Paid</button>'}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    // Mark an order as paid via the Worker API
-    async function markPaid(orderId) {
-      const res = await fetch(API_URL + '/api/orders/' + orderId + '/markpaid', {
-        method: 'POST'
-      });
-      const result = await res.json();
-      if(result.success) {
-        alert('Order marked as paid');
-        loadOrders();
-      } else {
-        alert('Error marking order as paid');
+    // Utility to show/hide sections
+    function showSection(sectionId) {
+      document.getElementById('loginSection').classList.add('hidden');
+      document.getElementById('dashboardSection').classList.remove('hidden');
+      document.getElementById('ordersView').classList.add('hidden');
+      document.getElementById('editView').classList.add('hidden');
+      if(sectionId === 'ordersView'){
+        document.getElementById('ordersView').classList.remove('hidden');
+      } else if(sectionId === 'editView'){
+        document.getElementById('editView').classList.remove('hidden');
       }
     }
 
-    // Update subjects list via API
-    document.getElementById('updateSubjects').addEventListener('click', async () => {
-      let subjectsText = document.getElementById('subjectsList').value;
+    // Admin Login
+    document.getElementById('adminLoginForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const email = document.getElementById('adminEmail').value;
+      const password = document.getElementById('adminPassword').value;
+      try {
+        const res = await fetch(API_URL + '/api/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const result = await res.json();
+        const loginMsg = document.getElementById('loginMessage');
+        if(result.success && result.token) {
+          localStorage.setItem('adminToken', result.token);
+          loginMsg.textContent = "Login successful!";
+          loginMsg.className = "message";
+          showSection('ordersView');
+          loadOrders();
+        } else {
+          loginMsg.textContent = "Login failed: " + (result.error || "Invalid credentials");
+          loginMsg.className = "error";
+        }
+      } catch (error) {
+        document.getElementById('loginMessage').textContent = "Login error: " + error.message;
+        document.getElementById('loginMessage').className = "error";
+      }
+    });
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', function(){
+      localStorage.removeItem('adminToken');
+      document.getElementById('loginMessage').textContent = "";
+      document.getElementById('dashboardMessage').textContent = "";
+      document.getElementById('adminEmail').value = "";
+      document.getElementById('adminPassword').value = "";
+      document.getElementById('dashboardSection').classList.add('hidden');
+      document.getElementById('loginSection').classList.remove('hidden');
+    });
+
+    // Navigation buttons
+    document.getElementById('viewOrdersBtn').addEventListener('click', function(){
+      showSection('ordersView');
+      loadOrders();
+    });
+    document.getElementById('editDataBtn').addEventListener('click', function(){
+      showSection('editView');
+    });
+
+    // Load orders from the API and split them into pending and completed
+    async function loadOrders() {
+      const token = localStorage.getItem('adminToken');
+      try {
+        const res = await fetch(API_URL + '/api/orders', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const orders = await res.json();
+        const pendingTbody = document.querySelector('#pendingOrdersTable tbody');
+        const completedTbody = document.querySelector('#completedOrdersTable tbody');
+        pendingTbody.innerHTML = "";
+        completedTbody.innerHTML = "";
+        orders.forEach(order => {
+          // Assuming each order contains: id, email, subject, output, quantity, rubric, paymentReceived
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${order.id}</td>
+            <td>${order.email || 'N/A'}</td>
+            <td>${order.subject}</td>
+            <td>${order.output}</td>
+            <td>${order.quantity}</td>
+            <td>${order.rubric ? 'Yes' : 'No'}</td>
+            <td>${order.paymentReceived ? '' : '<button onclick="markOrderPaid(\''+order.id+'\')">Mark as Paid</button>'}</td>
+          `;
+          if(order.paymentReceived) {
+            completedTbody.appendChild(tr);
+          } else {
+            pendingTbody.appendChild(tr);
+          }
+        });
+      } catch (error) {
+        document.getElementById('dashboardMessage').textContent = "Error loading orders: " + error.message;
+        document.getElementById('dashboardMessage').className = "error";
+      }
+    }
+
+    // Mark an order as paid
+    async function markOrderPaid(orderId) {
+      const token = localStorage.getItem('adminToken');
+      try {
+        const res = await fetch(API_URL + '/api/orders/' + orderId + '/markpaid', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          }
+        });
+        const result = await res.json();
+        if(result.success) {
+          loadOrders();
+        } else {
+          document.getElementById('dashboardMessage').textContent = "Error: " + result.error;
+          document.getElementById('dashboardMessage').className = "error";
+        }
+      } catch (error) {
+        document.getElementById('dashboardMessage').textContent = "Error marking order as paid: " + error.message;
+        document.getElementById('dashboardMessage').className = "error";
+      }
+    }
+
+    // Update subjects (edit view)
+    document.getElementById('updateSubjectsBtn').addEventListener('click', async function(){
+      const token = localStorage.getItem('adminToken');
+      let subjectsText = document.getElementById('subjectsInput').value;
       try {
         const subjects = JSON.parse(subjectsText);
         const res = await fetch(API_URL + '/api/admin/subjects', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
           body: JSON.stringify({ subjects })
         });
         const result = await res.json();
-        if(result.success) {
-          alert('Subjects updated successfully');
-        } else {
-          alert('Error updating subjects: ' + result.error);
-        }
+        document.getElementById('dashboardMessage').textContent = result.success ? "Subjects updated successfully" : "Error: " + result.error;
+        document.getElementById('dashboardMessage').className = result.success ? "message" : "error";
       } catch (e) {
-        alert('Invalid JSON format for subjects');
+        document.getElementById('dashboardMessage').textContent = "Invalid JSON for subjects";
+        document.getElementById('dashboardMessage').className = "error";
       }
     });
 
-    // Update outputs for a subject via API
-    document.getElementById('updateOutputs').addEventListener('click', async () => {
+    // Update outputs (edit view)
+    document.getElementById('updateOutputsBtn').addEventListener('click', async function(){
+      const token = localStorage.getItem('adminToken');
       const subject = document.getElementById('subjectForOutputs').value.trim();
-      let outputsText = document.getElementById('outputsList').value;
+      let outputsText = document.getElementById('outputsInput').value;
       if (!subject) {
-        alert('Please enter a subject name');
+        document.getElementById('dashboardMessage').textContent = "Please enter a subject name for outputs.";
+        document.getElementById('dashboardMessage').className = "error";
         return;
       }
       try {
         const outputs = JSON.parse(outputsText);
         const res = await fetch(API_URL + '/api/admin/outputs', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          },
           body: JSON.stringify({ subject, outputs })
         });
         const result = await res.json();
-        if(result.success) {
-          alert('Outputs updated successfully for ' + subject);
-        } else {
-          alert('Error updating outputs: ' + result.error);
-        }
+        document.getElementById('dashboardMessage').textContent = result.success ? "Outputs updated successfully" : "Error: " + result.error;
+        document.getElementById('dashboardMessage').className = result.success ? "message" : "error";
       } catch (e) {
-        alert('Invalid JSON format for outputs');
+        document.getElementById('dashboardMessage').textContent = "Invalid JSON for outputs";
+        document.getElementById('dashboardMessage').className = "error";
       }
     });
-
-    loadOrders();
   </script>
 </body>
 </html>
