@@ -124,7 +124,7 @@ table tr:hover {
   display: none;
 }
 
-/* Responsive Layout for Orders */
+/* Orders Layout */
 .orders-container {
   display: flex;
   gap: 20px;
@@ -133,4 +133,12 @@ table tr:hover {
 .orders-container > div {
   flex: 1;
   min-width: 300px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  nav {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
