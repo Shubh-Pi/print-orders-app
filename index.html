@@ -1,103 +1,118 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Client Portal - Print Order</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    .section { display: none; margin-bottom: 20px; padding: 10px; border: 1px solid #ccc; }
-    .message { color: green; }
-    .error { color: red; }
-    a { text-decoration: none; color: blue; }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Client Portal</h1>
-
-  <!-- Registration Section -->
-  <div id="registrationSection" class="section">
-    <h2>Register</h2>
-    <form id="clientRegistrationForm">
-      <label for="clientEmailReg">Email:</label>
-      <input type="email" id="clientEmailReg" required placeholder="you@nhitm.ac.in"><br><br>
-      <label for="clientPasswordReg">Password:</label>
-      <input type="password" id="clientPasswordReg" required><br><br>
-      <button type="submit">Register</button>
-    </form>
-    <p id="registrationMessage"></p>
-    <p>Already registered? <a href="#" id="showLoginLink">Login here</a></p>
-  </div>
-
-  <!-- Login Section -->
-  <div id="loginSection" class="section">
-    <h2>Login</h2>
-    <form id="clientLoginForm">
-      <label for="clientEmailLogin">Email:</label>
-      <input type="email" id="clientEmailLogin" required placeholder="you@nhitm.ac.in"><br><br>
-      <label for="clientPasswordLogin">Password:</label>
-      <input type="password" id="clientPasswordLogin" required><br><br>
-      <button type="submit">Login</button>
-    </form>
-    <p id="loginMessage"></p>
-    <p>New user? <a href="#" id="showRegistrationLink">Register here</a></p>
-  </div>
-
-  <!-- Order Form Section -->
-  <div id="orderSection" class="section">
-    <h2>Place Your Print Order</h2>
-    <button id="logoutButton">Logout</button>
-    <br><br>
-    <form id="orderForm">
-      <label for="subject">Subject:</label>
-      <select id="subject" name="subject"></select><br><br>
-      <label for="output">Output:</label>
-      <select id="output" name="output"></select><br><br>
-      <label for="quantity">Quantity:</label>
-      <input type="number" id="quantity" name="quantity" value="1" min="1"><br><br>
-      <label for="rubric">Rubric Required:</label>
-      <input type="checkbox" id="rubric" name="rubric"><br><br>
-      <div id="rubricCountContainer" style="display: none;">
-        <label for="rubricCount">No. of Rubrics Needed:</label>
-        <input type="number" id="rubricCount" name="rubricCount" value="1" min="1"><br><br>
+  <header>
+    <h1>Client Portal</h1>
+  </header>
+  <div class="container">
+    <!-- Registration & Login Section -->
+    <section id="authSection">
+      <div id="registrationSection">
+        <h2>Register</h2>
+        <form id="clientRegistrationForm">
+          <label for="clientEmailReg">Email:</label>
+          <input type="email" id="clientEmailReg" required placeholder="you@example.com">
+          <label for="clientPasswordReg">Password:</label>
+          <input type="password" id="clientPasswordReg" required>
+          <button type="submit">Register</button>
+        </form>
+        <p id="registrationMessage"></p>
+        <p>Already registered? <a href="#" id="showLoginLink">Login here</a></p>
       </div>
-      <div id="totalPayment">Total Payment: $0</div><br>
-      <button type="submit">Submit Order</button>
-    </form>
-    <p id="orderMessage"></p>
+
+      <div id="loginSection" class="hidden">
+        <h2>Login</h2>
+        <form id="clientLoginForm">
+          <label for="clientEmailLogin">Email:</label>
+          <input type="email" id="clientEmailLogin" required placeholder="you@example.com">
+          <label for="clientPasswordLogin">Password:</label>
+          <input type="password" id="clientPasswordLogin" required>
+          <button type="submit">Login</button>
+        </form>
+        <p id="loginMessage"></p>
+        <p>New user? <a href="#" id="showRegistrationLink">Register here</a></p>
+      </div>
+    </section>
+
+    <!-- Client Dashboard Section -->
+    <section id="dashboardSection" class="hidden">
+      <nav>
+        <button id="orderFormBtn">Place Order</button>
+        <button id="orderHistoryBtn">Order History</button>
+        <button id="logoutBtn">Logout</button>
+      </nav>
+      <!-- Order Form View -->
+      <div id="orderFormView">
+        <h2>Place Your Print Order</h2>
+        <form id="orderForm">
+          <label for="subject">Subject:</label>
+          <select id="subject" name="subject"></select>
+          <label for="output">Output:</label>
+          <select id="output" name="output"></select>
+          <label for="quantity">Quantity:</label>
+          <input type="number" id="quantity" name="quantity" value="1" min="1">
+          <label for="rubric">Rubric Required:</label>
+          <input type="checkbox" id="rubric" name="rubric">
+          <div id="rubricCountContainer" class="hidden">
+            <label for="rubricCount">No. of Rubrics Needed:</label>
+            <input type="number" id="rubricCount" name="rubricCount" value="1" min="1">
+          </div>
+          <div id="totalPayment">Total Payment: $0</div>
+          <button type="submit">Submit Order</button>
+        </form>
+        <p id="orderMessage"></p>
+      </div>
+
+      <!-- Order History View -->
+      <div id="orderHistoryView" class="hidden">
+        <h2>Your Order History</h2>
+        <table id="orderHistoryTable">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Subject</th>
+              <th>Output</th>
+              <th>Quantity</th>
+              <th>Rubric</th>
+              <th>Status</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
   </div>
 
   <script>
-    // Update this URL to your deployed Cloudflare Worker API endpoint.
     const API_URL = 'https://print-order-worker.balgudeshubham64.workers.dev';
 
-
-    // Utility: Show only the given section.
-    function showSection(sectionId) {
-      document.getElementById('registrationSection').style.display = 'none';
-      document.getElementById('loginSection').style.display = 'none';
-      document.getElementById('orderSection').style.display = 'none';
-      document.getElementById(sectionId).style.display = 'block';
+    // Utility: Show/Hide sections in the auth and dashboard areas.
+    function showAuthSection(sectionId) {
+      document.getElementById('registrationSection').classList.add('hidden');
+      document.getElementById('loginSection').classList.add('hidden');
+      document.getElementById(sectionId).classList.remove('hidden');
     }
 
-    // Check if client is logged in (by checking for a token in localStorage)
-    function checkLogin() {
-      const token = localStorage.getItem('clientToken');
-      if (token) {
-        showSection('orderSection');
-        loadSubjects();
-      } else {
-        showSection('loginSection');
-      }
+    function showDashboardView(viewId) {
+      document.getElementById('orderFormView').classList.add('hidden');
+      document.getElementById('orderHistoryView').classList.add('hidden');
+      document.getElementById(viewId).classList.remove('hidden');
     }
 
-    // Toggle between registration and login sections
+    // Switch between registration and login
     document.getElementById('showLoginLink').addEventListener('click', function(e) {
       e.preventDefault();
-      showSection('loginSection');
+      showAuthSection('loginSection');
     });
     document.getElementById('showRegistrationLink').addEventListener('click', function(e) {
       e.preventDefault();
-      showSection('registrationSection');
+      showAuthSection('registrationSection');
     });
 
     // Client Registration
@@ -113,10 +128,10 @@
         });
         const result = await res.json();
         const regMsg = document.getElementById('registrationMessage');
-        if (result.success) {
+        if(result.success) {
           regMsg.textContent = "Registration successful! Please login.";
           regMsg.className = "message";
-          setTimeout(() => { showSection('loginSection'); }, 1500);
+          setTimeout(() => showAuthSection('loginSection'), 1500);
         } else {
           regMsg.textContent = "Registration failed: " + (result.error || "Unknown error");
           regMsg.className = "error";
@@ -140,11 +155,14 @@
         });
         const result = await res.json();
         const loginMsg = document.getElementById('loginMessage');
-        if (result.success && result.token) {
+        if(result.success && result.token) {
           localStorage.setItem('clientToken', result.token);
           loginMsg.textContent = "Login successful!";
           loginMsg.className = "message";
-          setTimeout(() => { showSection('orderSection'); loadSubjects(); }, 1000);
+          document.getElementById('authSection').classList.add('hidden');
+          document.getElementById('dashboardSection').classList.remove('hidden');
+          showDashboardView('orderFormView');
+          loadSubjects();
         } else {
           loginMsg.textContent = "Login failed: " + (result.error || "Invalid credentials");
           loginMsg.className = "error";
@@ -155,24 +173,40 @@
       }
     });
 
-    // Logout
-    document.getElementById('logoutButton').addEventListener('click', function() {
+    // Logout from client dashboard
+    document.getElementById('logoutBtn').addEventListener('click', function(){
       localStorage.removeItem('clientToken');
-      showSection('loginSection');
+      document.getElementById('dashboardSection').classList.add('hidden');
+      document.getElementById('authSection').classList.remove('hidden');
+      showAuthSection('loginSection');
     });
 
-    // Order Form: Toggle rubric count input
+    // Toggle rubric count display on order form
     document.getElementById('rubric').addEventListener('change', function(e) {
-      document.getElementById('rubricCountContainer').style.display = e.target.checked ? 'block' : 'none';
+      if(e.target.checked) {
+        document.getElementById('rubricCountContainer').classList.remove('hidden');
+      } else {
+        document.getElementById('rubricCountContainer').classList.add('hidden');
+      }
     });
 
-    // Load subjects from the API
+    // Navigation in dashboard
+    document.getElementById('orderFormBtn').addEventListener('click', function(){
+      showDashboardView('orderFormView');
+      loadSubjects();
+    });
+    document.getElementById('orderHistoryBtn').addEventListener('click', function(){
+      showDashboardView('orderHistoryView');
+      loadOrderHistory();
+    });
+
+    // Load subjects for order form
     async function loadSubjects() {
       try {
         const res = await fetch(API_URL + '/api/subjects');
         const subjects = await res.json();
         const subjectSelect = document.getElementById('subject');
-        subjectSelect.innerHTML = '';
+        subjectSelect.innerHTML = "";
         subjects.forEach(s => {
           const option = document.createElement('option');
           option.value = s;
@@ -185,13 +219,13 @@
       }
     }
 
-    // Load outputs for a given subject
+    // Load outputs for the selected subject
     async function loadOutputs(subject) {
       try {
         const res = await fetch(API_URL + '/api/outputs?subject=' + encodeURIComponent(subject));
         const outputs = await res.json();
         const outputSelect = document.getElementById('output');
-        outputSelect.innerHTML = '';
+        outputSelect.innerHTML = "";
         outputs.forEach(o => {
           const option = document.createElement('option');
           option.value = o.id;
@@ -206,7 +240,7 @@
       }
     }
 
-    // Calculate the total payment (currently based on quantity and output price)
+    // Calculate total payment based on price and quantity
     function calculatePayment() {
       const outputSelect = document.getElementById('output');
       const selectedOption = outputSelect.options[outputSelect.selectedIndex];
@@ -216,19 +250,18 @@
       document.getElementById('totalPayment').textContent = 'Total Payment: $' + total.toFixed(2);
     }
 
-    // Recalculate payment when quantity or output changes
     document.getElementById('quantity').addEventListener('input', calculatePayment);
     document.getElementById('output').addEventListener('change', calculatePayment);
     document.getElementById('subject').addEventListener('change', function(e) {
       loadOutputs(e.target.value);
     });
 
-    // Order Form submission
+    // Submit order form
     document.getElementById('orderForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       const token = localStorage.getItem('clientToken');
-      if (!token) {
-        alert("You must be logged in to place an order.");
+      if(!token) {
+        alert("Please log in first.");
         return;
       }
       const order = {
@@ -249,7 +282,7 @@
         });
         const result = await res.json();
         const orderMsg = document.getElementById('orderMessage');
-        if (result.success) {
+        if(result.success) {
           orderMsg.textContent = "Order placed successfully. Order ID: " + result.orderId;
           orderMsg.className = "message";
         } else {
@@ -262,8 +295,37 @@
       }
     });
 
-    // On page load, check login status.
-    window.onload = checkLogin;
+    // Load order history for the logged-in client
+    async function loadOrderHistory() {
+      const token = localStorage.getItem('clientToken');
+      try {
+        const res = await fetch(API_URL + '/api/orders', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const orders = await res.json();
+        const tbody = document.querySelector('#orderHistoryTable tbody');
+        tbody.innerHTML = "";
+        // Filter orders by client email (decoded from token)
+        const email = atob(token);
+        orders.filter(o => o.email === email).forEach(order => {
+          const tr = document.createElement('tr');
+          const status = order.paymentReceived ? "Payment Completed" : "Payment Remaining";
+          const date = new Date(order.timestamp).toLocaleString();
+          tr.innerHTML = `
+            <td>${order.id}</td>
+            <td>${order.subject}</td>
+            <td>${order.output}</td>
+            <td>${order.quantity}</td>
+            <td>${order.rubric ? 'Yes' : 'No'}</td>
+            <td>${status}</td>
+            <td>${date}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (error) {
+        console.error("Error loading order history:", error);
+      }
+    }
   </script>
 </body>
 </html>
