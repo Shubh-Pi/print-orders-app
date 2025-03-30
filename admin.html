@@ -10,7 +10,7 @@
     <h1>Admin Portal</h1>
   </header>
   <div class="container">
-    <!-- Registration Section (shown if no admin registered) -->
+    <!-- Admin Registration Section (shown if no admin is registered) -->
     <section id="adminRegistrationSection" class="hidden">
       <h2>Admin Registration</h2>
       <form id="adminRegistrationForm">
@@ -24,7 +24,7 @@
       <p>Already registered? <a href="#" id="switchToLogin">Login here</a></p>
     </section>
 
-    <!-- Login Section -->
+    <!-- Admin Login Section -->
     <section id="adminLoginSection">
       <h2>Admin Login</h2>
       <form id="adminLoginForm">
@@ -107,39 +107,22 @@
   <script>
     const API_URL = 'https://print-order-worker.balgudeshubham64.workers.dev';
 
-    // Utility: Show or hide sections
+    // Utility: Show/hide sections.
     function showSection(sectionId) {
-      // Hide all sections
       document.getElementById('adminRegistrationSection').classList.add('hidden');
       document.getElementById('adminLoginSection').classList.add('hidden');
       document.getElementById('dashboardSection').classList.add('hidden');
-      // Show the requested section
       document.getElementById(sectionId).classList.remove('hidden');
     }
 
-    // Check if admin is registered (this demo uses an API call)
-    async function checkAdminRegistration() {
-      try {
-        // We'll try to get the admin credentials from the KV.
-        // (Since there's no direct KV query here, you might add an API endpoint for this purpose.
-        // For now, assume that if no token is stored in localStorage for admin, registration is needed.)
-        const token = localStorage.getItem('adminToken');
-        if (token) {
-          showSection('dashboardSection');
-          showDashboardView('ordersView');
-          loadOrders();
-        } else {
-          // For demo, try to log in; if admin is not registered, show registration.
-          // (You can adjust this logic as needed.)
-          showSection('adminRegistrationSection');
-        }
-      } catch (error) {
-        console.error("Error checking admin registration:", error);
-        showSection('adminRegistrationSection');
-      }
+    // Utility: Show a view within the dashboard.
+    function showDashboardView(viewId) {
+      document.getElementById('ordersView').classList.add('hidden');
+      document.getElementById('editView').classList.add('hidden');
+      document.getElementById(viewId).classList.remove('hidden');
     }
 
-    // Switch between registration and login forms
+    // Switch between registration and login
     document.getElementById('switchToLogin').addEventListener('click', function(e) {
       e.preventDefault();
       showSection('adminLoginSection');
@@ -214,7 +197,7 @@
       showSection('adminLoginSection');
     });
 
-    // Navigation in dashboard
+    // Dashboard Navigation
     document.getElementById('viewOrdersBtn').addEventListener('click', function(){
       showDashboardView('ordersView');
       loadOrders();
@@ -223,18 +206,7 @@
       showDashboardView('editView');
     });
 
-    // Utility: Show a view within dashboard
-    function showDashboardView(viewId) {
-      document.getElementById('ordersView').classList.add('hidden');
-      document.getElementById('editView').classList.add('hidden');
-      if(viewId === 'ordersView'){
-        document.getElementById('ordersView').classList.remove('hidden');
-      } else if(viewId === 'editView'){
-        document.getElementById('editView').classList.remove('hidden');
-      }
-    }
-
-    // Load orders from the API (for admin)
+    // Load orders (admin)
     async function loadOrders() {
       const token = localStorage.getItem('adminToken');
       try {
@@ -255,7 +227,7 @@
             <td>${order.output}</td>
             <td>${order.quantity}</td>
             <td>${order.rubric ? 'Yes' : 'No'}</td>
-            <td>${order.paymentReceived ? '' : '<button onclick="markOrderPaid(\''+order.id+'\')">Mark as Paid</button>'}</td>
+            <td>${order.paymentReceived ? '' : '<button onclick="markOrderPaid(\'' + order.id + '\')">Mark as Paid</button>'}</td>
           `;
           if(order.paymentReceived) {
             completedTbody.appendChild(tr);
@@ -344,12 +316,26 @@
         document.getElementById('dashboardMessage').className = "error";
       }
     });
+
+    // Check admin registration on load
+    async function checkAdminRegistration() {
+      // For demo, we try to see if admin credentials exist by trying to log in using localStorage token.
+      const token = localStorage.getItem('adminToken');
+      if (token) {
+        showSection('dashboardSection');
+        showDashboardView('ordersView');
+        loadOrders();
+      } else {
+        // If no token, default to registration view.
+        showSection('adminRegistrationSection');
+      }
+    }
     window.addEventListener('load', () => {
-      document.getElementById('adminEmail') && (document.getElementById('adminEmail').value = "");
-      document.getElementById('adminPassword') && (document.getElementById('adminPassword').value = "");
-    }); 
-    // On page load, check if admin is registered and/or logged in.
-    checkAdminRegistration();
+      // Clear login inputs on load if desired.
+      document.getElementById('adminEmail').value = "";
+      document.getElementById('adminPassword').value = "";
+      checkAdminRegistration();
+    });
   </script>
 </body>
 </html>
