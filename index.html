@@ -10,7 +10,7 @@
     <h1>Client Portal</h1>
   </header>
   <div class="container">
-    <!-- Registration & Login Section -->
+    <!-- Authentication Section -->
     <section id="authSection">
       <div id="registrationSection">
         <h2>Register</h2>
@@ -24,7 +24,6 @@
         <p id="registrationMessage"></p>
         <p>Already registered? <a href="#" id="showLoginLink">Login here</a></p>
       </div>
-
       <div id="loginSection" class="hidden">
         <h2>Login</h2>
         <form id="clientLoginForm">
@@ -39,7 +38,7 @@
       </div>
     </section>
 
-    <!-- Client Dashboard Section -->
+    <!-- Dashboard Section -->
     <section id="dashboardSection" class="hidden">
       <nav>
         <button id="orderFormBtn">Place Order</button>
@@ -67,7 +66,6 @@
         </form>
         <p id="orderMessage"></p>
       </div>
-
       <!-- Order History View -->
       <div id="orderHistoryView" class="hidden">
         <h2>Your Order History</h2>
@@ -92,20 +90,19 @@
   <script>
     const API_URL = 'https://print-order-worker.balgudeshubham64.workers.dev';
 
-    // Utility: Show/Hide sections in the auth and dashboard areas.
+    // Utility: Show/hide sections in auth and dashboard
     function showAuthSection(sectionId) {
       document.getElementById('registrationSection').classList.add('hidden');
       document.getElementById('loginSection').classList.add('hidden');
       document.getElementById(sectionId).classList.remove('hidden');
     }
-
     function showDashboardView(viewId) {
       document.getElementById('orderFormView').classList.add('hidden');
       document.getElementById('orderHistoryView').classList.add('hidden');
       document.getElementById(viewId).classList.remove('hidden');
     }
 
-    // Switch between registration and login
+    // Switch between registration and login in authSection
     document.getElementById('showLoginLink').addEventListener('click', function(e) {
       e.preventDefault();
       showAuthSection('loginSection');
@@ -173,21 +170,12 @@
       }
     });
 
-    // Logout from client dashboard
+    // Client Logout
     document.getElementById('logoutBtn').addEventListener('click', function(){
       localStorage.removeItem('clientToken');
       document.getElementById('dashboardSection').classList.add('hidden');
       document.getElementById('authSection').classList.remove('hidden');
       showAuthSection('loginSection');
-    });
-
-    // Toggle rubric count display on order form
-    document.getElementById('rubric').addEventListener('change', function(e) {
-      if(e.target.checked) {
-        document.getElementById('rubricCountContainer').classList.remove('hidden');
-      } else {
-        document.getElementById('rubricCountContainer').classList.add('hidden');
-      }
     });
 
     // Navigation in dashboard
@@ -240,7 +228,7 @@
       }
     }
 
-    // Calculate total payment based on price and quantity
+    // Calculate total payment
     function calculatePayment() {
       const outputSelect = document.getElementById('output');
       const selectedOption = outputSelect.options[outputSelect.selectedIndex];
@@ -249,7 +237,6 @@
       const total = price * quantity;
       document.getElementById('totalPayment').textContent = 'Total Payment: $' + total.toFixed(2);
     }
-
     document.getElementById('quantity').addEventListener('input', calculatePayment);
     document.getElementById('output').addEventListener('change', calculatePayment);
     document.getElementById('subject').addEventListener('change', function(e) {
@@ -326,9 +313,11 @@
         console.error("Error loading order history:", error);
       }
     }
+
+    // On page load, clear inputs if desired and check for login status.
     window.addEventListener('load', () => {
-      document.getElementById('adminEmail') && (document.getElementById('adminEmail').value = "");
-      document.getElementById('adminPassword') && (document.getElementById('adminPassword').value = "");
+      document.getElementById('clientEmailLogin').value = "";
+      document.getElementById('clientPasswordLogin').value = "";
     });
   </script>
 </body>
