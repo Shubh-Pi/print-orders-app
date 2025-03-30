@@ -326,6 +326,10 @@
         console.error("Error loading order history:", error);
       }
     }
+    window.addEventListener('load', () => {
+      document.getElementById('adminEmail') && (document.getElementById('adminEmail').value = "");
+      document.getElementById('adminPassword') && (document.getElementById('adminPassword').value = "");
+    });
   </script>
 </body>
 </html>
