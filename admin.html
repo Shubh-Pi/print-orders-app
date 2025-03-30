@@ -10,8 +10,22 @@
     <h1>Admin Portal</h1>
   </header>
   <div class="container">
+    <!-- Registration Section (shown if no admin registered) -->
+    <section id="adminRegistrationSection" class="hidden">
+      <h2>Admin Registration</h2>
+      <form id="adminRegistrationForm">
+        <label for="regAdminEmail">Email (must end with @nhitm.ac.in):</label>
+        <input type="email" id="regAdminEmail" required placeholder="admin@nhitm.ac.in">
+        <label for="regAdminPassword">Password:</label>
+        <input type="password" id="regAdminPassword" required>
+        <button type="submit">Register Admin</button>
+      </form>
+      <p id="registrationMessage"></p>
+      <p>Already registered? <a href="#" id="switchToLogin">Login here</a></p>
+    </section>
+
     <!-- Login Section -->
-    <section id="loginSection">
+    <section id="adminLoginSection">
       <h2>Admin Login</h2>
       <form id="adminLoginForm">
         <label for="adminEmail">Email (must end with @nhitm.ac.in):</label>
@@ -21,6 +35,7 @@
         <button type="submit">Login</button>
       </form>
       <p id="loginMessage"></p>
+      <p>Not registered? <a href="#" id="switchToRegister">Register here</a></p>
     </section>
 
     <!-- Dashboard Section (hidden by default) -->
@@ -92,18 +107,74 @@
   <script>
     const API_URL = 'https://print-order-worker.balgudeshubham64.workers.dev';
 
-    // Utility to show/hide sections
+    // Utility: Show or hide sections
     function showSection(sectionId) {
-      document.getElementById('loginSection').classList.add('hidden');
-      document.getElementById('dashboardSection').classList.remove('hidden');
-      document.getElementById('ordersView').classList.add('hidden');
-      document.getElementById('editView').classList.add('hidden');
-      if(sectionId === 'ordersView'){
-        document.getElementById('ordersView').classList.remove('hidden');
-      } else if(sectionId === 'editView'){
-        document.getElementById('editView').classList.remove('hidden');
+      // Hide all sections
+      document.getElementById('adminRegistrationSection').classList.add('hidden');
+      document.getElementById('adminLoginSection').classList.add('hidden');
+      document.getElementById('dashboardSection').classList.add('hidden');
+      // Show the requested section
+      document.getElementById(sectionId).classList.remove('hidden');
+    }
+
+    // Check if admin is registered (this demo uses an API call)
+    async function checkAdminRegistration() {
+      try {
+        // We'll try to get the admin credentials from the KV.
+        // (Since there's no direct KV query here, you might add an API endpoint for this purpose.
+        // For now, assume that if no token is stored in localStorage for admin, registration is needed.)
+        const token = localStorage.getItem('adminToken');
+        if (token) {
+          showSection('dashboardSection');
+          showDashboardView('ordersView');
+          loadOrders();
+        } else {
+          // For demo, try to log in; if admin is not registered, show registration.
+          // (You can adjust this logic as needed.)
+          showSection('adminRegistrationSection');
+        }
+      } catch (error) {
+        console.error("Error checking admin registration:", error);
+        showSection('adminRegistrationSection');
       }
     }
+
+    // Switch between registration and login forms
+    document.getElementById('switchToLogin').addEventListener('click', function(e) {
+      e.preventDefault();
+      showSection('adminLoginSection');
+    });
+    document.getElementById('switchToRegister').addEventListener('click', function(e) {
+      e.preventDefault();
+      showSection('adminRegistrationSection');
+    });
+
+    // Admin Registration
+    document.getElementById('adminRegistrationForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const email = document.getElementById('regAdminEmail').value;
+      const password = document.getElementById('regAdminPassword').value;
+      try {
+        const res = await fetch(API_URL + '/api/admin/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const result = await res.json();
+        const regMsg = document.getElementById('registrationMessage');
+        if(result.success) {
+          regMsg.textContent = result.message;
+          regMsg.className = "message";
+          setTimeout(() => showSection('adminLoginSection'), 1500);
+        } else {
+          regMsg.textContent = "Registration failed: " + (result.error || "Unknown error");
+          regMsg.className = "error";
+        }
+      } catch (error) {
+        document.getElementById('registrationMessage').textContent = "Registration error: " + error.message;
+        document.getElementById('registrationMessage').className = "error";
+      }
+    });
 
     // Admin Login
     document.getElementById('adminLoginForm').addEventListener('submit', async function(e) {
@@ -122,7 +193,8 @@
           localStorage.setItem('adminToken', result.token);
           loginMsg.textContent = "Login successful!";
           loginMsg.className = "message";
-          showSection('ordersView');
+          showSection('dashboardSection');
+          showDashboardView('ordersView');
           loadOrders();
         } else {
           loginMsg.textContent = "Login failed: " + (result.error || "Invalid credentials");
@@ -134,27 +206,35 @@
       }
     });
 
-    // Logout
+    // Admin Logout
     document.getElementById('logoutBtn').addEventListener('click', function(){
       localStorage.removeItem('adminToken');
-      document.getElementById('loginMessage').textContent = "";
-      document.getElementById('dashboardMessage').textContent = "";
       document.getElementById('adminEmail').value = "";
       document.getElementById('adminPassword').value = "";
-      document.getElementById('dashboardSection').classList.add('hidden');
-      document.getElementById('loginSection').classList.remove('hidden');
+      showSection('adminLoginSection');
     });
 
-    // Navigation buttons
+    // Navigation in dashboard
     document.getElementById('viewOrdersBtn').addEventListener('click', function(){
-      showSection('ordersView');
+      showDashboardView('ordersView');
       loadOrders();
     });
     document.getElementById('editDataBtn').addEventListener('click', function(){
-      showSection('editView');
+      showDashboardView('editView');
     });
 
-    // Load orders from the API and split them into pending and completed
+    // Utility: Show a view within dashboard
+    function showDashboardView(viewId) {
+      document.getElementById('ordersView').classList.add('hidden');
+      document.getElementById('editView').classList.add('hidden');
+      if(viewId === 'ordersView'){
+        document.getElementById('ordersView').classList.remove('hidden');
+      } else if(viewId === 'editView'){
+        document.getElementById('editView').classList.remove('hidden');
+      }
+    }
+
+    // Load orders from the API (for admin)
     async function loadOrders() {
       const token = localStorage.getItem('adminToken');
       try {
@@ -167,7 +247,6 @@
         pendingTbody.innerHTML = "";
         completedTbody.innerHTML = "";
         orders.forEach(order => {
-          // Assuming each order contains: id, email, subject, output, quantity, rubric, paymentReceived
           const tr = document.createElement('tr');
           tr.innerHTML = `
             <td>${order.id}</td>
@@ -190,7 +269,7 @@
       }
     }
 
-    // Mark an order as paid
+    // Mark order as paid
     async function markOrderPaid(orderId) {
       const token = localStorage.getItem('adminToken');
       try {
@@ -265,6 +344,9 @@
         document.getElementById('dashboardMessage').className = "error";
       }
     });
+
+    // On page load, check if admin is registered and/or logged in.
+    checkAdminRegistration();
   </script>
 </body>
 </html>
