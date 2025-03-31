@@ -134,3 +134,21 @@ table tr:hover {
 .hidden {
   display: none;
 }
+
+/* Enhance edit forms in admin panel */
+.edit-form {
+  margin-bottom: 20px;
+  padding: 15px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background: #f7f7f7;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.edit-form h3 {
+  margin-bottom: 10px;
+  color: #004d66;
+  font-size: 1.1rem;
+}
+
+
