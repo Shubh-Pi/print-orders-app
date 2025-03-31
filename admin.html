@@ -90,10 +90,13 @@
       <div id="editView" class="hidden">
         <h2>Edit Subjects & Outputs</h2>
         <div class="edit-form">
-          <h3>Update Subjects</h3>
-          <textarea id="subjectsInput" rows="3" placeholder='["SEPM", "Math", "Science"]'></textarea>
-          <button id="updateSubjectsBtn">Update Subjects</button>
-        </div>
+          <div class="edit-form">
+            <h3>Update Subjects</h3>
+            <textarea id="subjectsInput" rows="3" placeholder='["SEPM", "Math", "Science"]'></textarea>
+            <small>Please enter a valid JSON array.</small>
+            <button id="updateSubjectsBtn">Update Subjects</button>
+          </div>
+
         <div class="edit-form">
           <h3>Update Outputs for a Subject</h3>
           <input type="text" id="subjectForOutputs" placeholder="Subject name">
