@@ -125,6 +125,7 @@ table tr:hover {
 }
 
 /* Custom checkbox styling */
+/* Custom checkbox styling */
 input[type="checkbox"] {
   appearance: none;
   width: 18px;
@@ -149,10 +150,11 @@ input[type="checkbox"]:checked::after {
   transform: rotate(45deg);
 }
 
-/* Ensure labels for checkboxes have proper spacing */
-label[for="rubric"] {
+/* Make the label and checkbox inline */
+label.checkbox-label {
   display: inline-flex;
   align-items: center;
   gap: 5px;
 }
+
 
