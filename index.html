@@ -12,18 +12,6 @@
   <div class="container">
     <!-- Authentication Section -->
     <section id="authSection">
-      <div id="registrationSection">
-        <h2>Register</h2>
-        <form id="clientRegistrationForm">
-          <label for="clientEmailReg">Email:</label>
-          <input type="email" id="clientEmailReg" required placeholder="you@example.com">
-          <label for="clientPasswordReg">Password:</label>
-          <input type="password" id="clientPasswordReg" required>
-          <button type="submit">Register</button>
-        </form>
-        <p id="registrationMessage"></p>
-        <p>Already registered? <a href="#" id="showLoginLink">Login here</a></p>
-      </div>
       <div id="loginSection" class="hidden">
         <h2>Login</h2>
         <form id="clientLoginForm">
@@ -35,6 +23,18 @@
         </form>
         <p id="loginMessage"></p>
         <p>New user? <a href="#" id="showRegistrationLink">Register here</a></p>
+      </div>
+      <div id="registrationSection">
+        <h2>Register</h2>
+        <form id="clientRegistrationForm">
+          <label for="clientEmailReg">Email:</label>
+          <input type="email" id="clientEmailReg" required placeholder="you@example.com">
+          <label for="clientPasswordReg">Password:</label>
+          <input type="password" id="clientPasswordReg" required>
+          <button type="submit">Register</button>
+        </form>
+        <p id="registrationMessage"></p>
+        <p>Already registered? <a href="#" id="showLoginLink">Login here</a></p>
       </div>
     </section>
 
