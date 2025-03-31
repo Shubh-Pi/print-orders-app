@@ -123,3 +123,36 @@ table tr:hover {
 .hidden {
   display: none;
 }
+
+/* Custom checkbox styling */
+input[type="checkbox"] {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #007acc;
+  border-radius: 3px;
+  vertical-align: middle;
+  cursor: pointer;
+  position: relative;
+  margin-right: 6px;
+}
+
+input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: 5px;
+  width: 4px;
+  height: 9px;
+  border: solid #007acc;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* Ensure labels for checkboxes have proper spacing */
+label[for="rubric"] {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
