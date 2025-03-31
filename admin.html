@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Admin Portal - Print Orders</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="admin-style.css">
 </head>
 <body>
   <header>
@@ -220,7 +220,6 @@
         pendingTbody.innerHTML = "";
         // Separate pending (status "pending" or "completed_payment_pending") and history ("payment_done")
         orders.forEach(order => {
-          // We'll display pending orders in the main table.
           if(order.orderStatus !== "payment_done") {
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -277,7 +276,7 @@
       }
     }
 
-    // Mark order as completed (update orderStatus to "completed_payment_pending")
+    // Mark order as completed.
     async function markOrderCompleted(orderId) {
       const token = localStorage.getItem('adminToken');
       try {
@@ -301,7 +300,7 @@
       }
     }
 
-    // Mark order as payment done (update orderStatus to "payment_done")
+    // Mark order as payment done.
     async function markPaymentDone(orderId) {
       const token = localStorage.getItem('adminToken');
       try {
@@ -377,10 +376,10 @@
       }
     });
 
-    // On page load, clear login inputs.
+    // Clear admin login fields on load.
     window.addEventListener('load', () => {
-      document.getElementById('clientEmailLogin').value = "";
-      document.getElementById('clientPasswordLogin').value = "";
+      document.getElementById('adminEmail').value = "";
+      document.getElementById('adminPassword').value = "";
     });
   </script>
 </body>
