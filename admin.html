@@ -10,7 +10,7 @@
     <h1>Admin Portal</h1>
   </header>
   <div class="container">
-    <!-- Admin Registration Section (shown if no admin is registered) -->
+    <!-- Admin Registration Section (if no admin is registered) -->
     <section id="adminRegistrationSection" class="hidden">
       <h2>Admin Registration</h2>
       <form id="adminRegistrationForm">
@@ -38,51 +38,52 @@
       <p>Not registered? <a href="#" id="switchToRegister">Register here</a></p>
     </section>
 
-    <!-- Dashboard Section (hidden by default) -->
+    <!-- Dashboard Section (after login) -->
     <section id="dashboardSection" class="hidden">
       <nav>
         <button id="viewOrdersBtn">View Orders</button>
         <button id="editDataBtn">Edit Subjects & Outputs</button>
         <button id="logoutBtn">Logout</button>
       </nav>
-      <!-- Orders View -->
+
+      <!-- Orders List -->
       <div id="ordersView">
-        <h2>Print Orders</h2>
-        <div class="orders-container">
-          <div>
-            <h3>Pending Orders</h3>
-            <table id="pendingOrdersTable">
-              <thead>
-                <tr>
-                  <th>Order ID</th>
-                  <th>Client Email</th>
-                  <th>Subject</th>
-                  <th>Output</th>
-                  <th>Quantity</th>
-                  <th>Rubric</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
-          <div>
-            <h3>Completed Orders</h3>
-            <table id="completedOrdersTable">
-              <thead>
-                <tr>
-                  <th>Order ID</th>
-                  <th>Client Email</th>
-                  <th>Subject</th>
-                  <th>Output</th>
-                  <th>Quantity</th>
-                  <th>Rubric</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
-        </div>
+        <h2>Orders</h2>
+        <table id="ordersTable">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Client Email</th>
+              <th>Subject</th>
+              <th>Output</th>
+              <th>Quantity</th>
+              <th>Rubric</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- History View -->
+      <div id="historyView" class="hidden">
+        <h2>Order History</h2>
+        <table id="historyTable">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Client Email</th>
+              <th>Subject</th>
+              <th>Output</th>
+              <th>Quantity</th>
+              <th>Rubric</th>
+              <th>Status</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
       </div>
 
       <!-- Edit Data View -->
@@ -90,7 +91,7 @@
         <h2>Edit Subjects & Outputs</h2>
         <div class="edit-form">
           <h3>Update Subjects</h3>
-          <textarea id="subjectsInput" rows="3" placeholder='["Math", "Science", "History"]'></textarea>
+          <textarea id="subjectsInput" rows="3" placeholder='["SEPM", "Math", "Science"]'></textarea>
           <button id="updateSubjectsBtn">Update Subjects</button>
         </div>
         <div class="edit-form">
@@ -107,22 +108,22 @@
   <script>
     const API_URL = 'https://print-order-worker.balgudeshubham64.workers.dev';
 
-    // Utility: Show/hide sections.
+    // Utility to show/hide sections.
     function showSection(sectionId) {
       document.getElementById('adminRegistrationSection').classList.add('hidden');
       document.getElementById('adminLoginSection').classList.add('hidden');
       document.getElementById('dashboardSection').classList.add('hidden');
       document.getElementById(sectionId).classList.remove('hidden');
     }
-
-    // Utility: Show a view within the dashboard.
+    // Utility to show a view within dashboard.
     function showDashboardView(viewId) {
       document.getElementById('ordersView').classList.add('hidden');
+      document.getElementById('historyView').classList.add('hidden');
       document.getElementById('editView').classList.add('hidden');
       document.getElementById(viewId).classList.remove('hidden');
     }
 
-    // Switch between registration and login
+    // Switch between registration and login.
     document.getElementById('switchToLogin').addEventListener('click', function(e) {
       e.preventDefault();
       showSection('adminLoginSection');
@@ -132,7 +133,7 @@
       showSection('adminRegistrationSection');
     });
 
-    // Admin Registration
+    // Admin Registration.
     document.getElementById('adminRegistrationForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       const email = document.getElementById('regAdminEmail').value;
@@ -159,7 +160,7 @@
       }
     });
 
-    // Admin Login
+    // Admin Login.
     document.getElementById('adminLoginForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       const email = document.getElementById('adminEmail').value;
@@ -177,6 +178,7 @@
           loginMsg.textContent = "Login successful!";
           loginMsg.className = "message";
           showSection('dashboardSection');
+          // By default, show the orders view.
           showDashboardView('ordersView');
           loadOrders();
         } else {
@@ -189,7 +191,7 @@
       }
     });
 
-    // Admin Logout
+    // Admin Logout.
     document.getElementById('logoutBtn').addEventListener('click', function(){
       localStorage.removeItem('adminToken');
       document.getElementById('adminEmail').value = "";
@@ -197,7 +199,7 @@
       showSection('adminLoginSection');
     });
 
-    // Dashboard Navigation
+    // Dashboard Navigation.
     document.getElementById('viewOrdersBtn').addEventListener('click', function(){
       showDashboardView('ordersView');
       loadOrders();
@@ -206,7 +208,7 @@
       showDashboardView('editView');
     });
 
-    // Load orders (admin)
+    // Load orders from API.
     async function loadOrders() {
       const token = localStorage.getItem('adminToken');
       try {
@@ -214,12 +216,50 @@
           headers: { 'Authorization': 'Bearer ' + token }
         });
         const orders = await res.json();
-        const pendingTbody = document.querySelector('#pendingOrdersTable tbody');
-        const completedTbody = document.querySelector('#completedOrdersTable tbody');
+        const pendingTbody = document.querySelector('#ordersTable tbody');
         pendingTbody.innerHTML = "";
-        completedTbody.innerHTML = "";
+        // Separate pending (status "pending" or "completed_payment_pending") and history ("payment_done")
         orders.forEach(order => {
+          // We'll display pending orders in the main table.
+          if(order.orderStatus !== "payment_done") {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${order.id}</td>
+              <td>${order.email || 'N/A'}</td>
+              <td>${order.subject}</td>
+              <td>${order.output}</td>
+              <td>${order.quantity}</td>
+              <td>${order.rubric ? 'Yes' : 'No'}</td>
+              <td>${order.orderStatus}</td>
+              <td>
+                ${order.orderStatus === "pending" ? '<label><input type="checkbox" onchange="markOrderCompleted(\''+order.id+'\')"> Order Completed</label>' : ''}
+                ${order.orderStatus === "completed_payment_pending" ? '<label><input type="checkbox" onchange="markPaymentDone(\''+order.id+'\')"> Payment Done</label>' : ''}
+              </td>
+            `;
+            pendingTbody.appendChild(tr);
+          }
+        });
+        // Also, load history (payment_done) orders separately.
+        loadHistory();
+      } catch (error) {
+        document.getElementById('dashboardMessage').textContent = "Error loading orders: " + error.message;
+        document.getElementById('dashboardMessage').className = "error";
+      }
+    }
+
+    // Load order history (orders with status "payment_done").
+    async function loadHistory() {
+      const token = localStorage.getItem('adminToken');
+      try {
+        const res = await fetch(API_URL + '/api/orders', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const orders = await res.json();
+        const historyTbody = document.querySelector('#historyTable tbody');
+        historyTbody.innerHTML = "";
+        orders.filter(o => o.orderStatus === "payment_done").forEach(order => {
           const tr = document.createElement('tr');
+          const date = new Date(order.timestamp).toLocaleString();
           tr.innerHTML = `
             <td>${order.id}</td>
             <td>${order.email || 'N/A'}</td>
@@ -227,25 +267,21 @@
             <td>${order.output}</td>
             <td>${order.quantity}</td>
             <td>${order.rubric ? 'Yes' : 'No'}</td>
-            <td>${order.paymentReceived ? '' : '<button onclick="markOrderPaid(\'' + order.id + '\')">Mark as Paid</button>'}</td>
+            <td>${order.orderStatus}</td>
+            <td>${date}</td>
           `;
-          if(order.paymentReceived) {
-            completedTbody.appendChild(tr);
-          } else {
-            pendingTbody.appendChild(tr);
-          }
+          historyTbody.appendChild(tr);
         });
       } catch (error) {
-        document.getElementById('dashboardMessage').textContent = "Error loading orders: " + error.message;
-        document.getElementById('dashboardMessage').className = "error";
+        console.error("Error loading order history:", error);
       }
     }
 
-    // Mark order as paid
-    async function markOrderPaid(orderId) {
+    // Mark order as completed (update orderStatus to "completed_payment_pending")
+    async function markOrderCompleted(orderId) {
       const token = localStorage.getItem('adminToken');
       try {
-        const res = await fetch(API_URL + '/api/orders/' + orderId + '/markpaid', {
+        const res = await fetch(API_URL + '/api/orders/' + orderId + '/complete', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -260,7 +296,31 @@
           document.getElementById('dashboardMessage').className = "error";
         }
       } catch (error) {
-        document.getElementById('dashboardMessage').textContent = "Error marking order as paid: " + error.message;
+        document.getElementById('dashboardMessage').textContent = "Error marking order as completed: " + error.message;
+        document.getElementById('dashboardMessage').className = "error";
+      }
+    }
+
+    // Mark order as payment done (update orderStatus to "payment_done")
+    async function markPaymentDone(orderId) {
+      const token = localStorage.getItem('adminToken');
+      try {
+        const res = await fetch(API_URL + '/api/orders/' + orderId + '/paymentdone', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
+          }
+        });
+        const result = await res.json();
+        if(result.success) {
+          loadOrders();
+        } else {
+          document.getElementById('dashboardMessage').textContent = "Error: " + result.error;
+          document.getElementById('dashboardMessage').className = "error";
+        }
+      } catch (error) {
+        document.getElementById('dashboardMessage').textContent = "Error marking payment done: " + error.message;
         document.getElementById('dashboardMessage').className = "error";
       }
     }
@@ -317,24 +377,10 @@
       }
     });
 
-    // Check admin registration on load
-    async function checkAdminRegistration() {
-      // For demo, we try to see if admin credentials exist by trying to log in using localStorage token.
-      const token = localStorage.getItem('adminToken');
-      if (token) {
-        showSection('dashboardSection');
-        showDashboardView('ordersView');
-        loadOrders();
-      } else {
-        // If no token, default to registration view.
-        showSection('adminRegistrationSection');
-      }
-    }
+    // On page load, clear login inputs.
     window.addEventListener('load', () => {
-      // Clear login inputs on load if desired.
-      document.getElementById('adminEmail').value = "";
-      document.getElementById('adminPassword').value = "";
-      checkAdminRegistration();
+      document.getElementById('clientEmailLogin').value = "";
+      document.getElementById('clientPasswordLogin').value = "";
     });
   </script>
 </body>
