@@ -61,12 +61,13 @@
             <label><input type="radio" name="printOption" value="alreadyCreated" checked> Use Already Created Print</label>
             <label><input type="radio" name="printOption" value="ownPrint"> Your Own Print</label>
           </fieldset>
-          <div id="ownPrintFields" class="hidden">
+          <div id="ownPrintFields">
             <label for="pdfFile">Upload PDF File:</label>
             <input type="file" id="pdfFile" accept="application/pdf">
             <label for="printDescription">Print Description (Color or Black & White):</label>
             <textarea id="printDescription" rows="3" placeholder="Enter print instructions"></textarea>
           </div>
+
 
           <label for="rubric">Rubric Required:</label>
           <input type="checkbox" id="rubric" name="rubric">
