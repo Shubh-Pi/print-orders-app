@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Client Portal - Print Order</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="index-style.css">
 </head>
 <body>
   <header>
@@ -62,8 +62,8 @@
             <label><input type="radio" name="printOption" value="ownPrint"> Your Own Print</label>
           </fieldset>
           <div id="ownPrintFields" class="hidden">
-            <label for="pdfUrl">PDF URL (or Base64 string):</label>
-            <input type="text" id="pdfUrl" placeholder="Enter PDF URL">
+            <label for="pdfFile">Upload PDF File:</label>
+            <input type="file" id="pdfFile" accept="application/pdf">
             <label for="printDescription">Print Description (Color or Black & White):</label>
             <textarea id="printDescription" rows="3" placeholder="Enter print instructions"></textarea>
           </div>
@@ -288,22 +288,37 @@
       }
       // Determine print option.
       const printOption = document.querySelector('input[name="printOption"]:checked').value;
-      let pdfUrl = "";
-      let printDescription = "";
-      if(printOption === 'ownPrint') {
-        pdfUrl = document.getElementById('pdfUrl').value;
-        printDescription = document.getElementById('printDescription').value;
-      }
-      const order = {
+      let order = {
         subject: document.getElementById('subject').value,
         output: document.getElementById('output').value,
         quantity: parseInt(document.getElementById('quantity').value),
         rubric: document.getElementById('rubric').checked,
         rubricCount: document.getElementById('rubric').checked ? parseInt(document.getElementById('rubricCount').value) : 0,
         printOption,
-        pdfUrl,
-        printDescription
+        printDescription: document.getElementById('printDescription').value
       };
+
+      // If ownPrint, read the file as a Base64 string.
+      if(printOption === 'ownPrint'){
+        const fileInput = document.getElementById('pdfFile');
+        if(fileInput.files[0]){
+          const reader = new FileReader();
+          reader.onload = async function(){
+            order.pdfData = reader.result; // Base64 string with data: prefix
+            await submitOrder(order, token);
+          }
+          reader.readAsDataURL(fileInput.files[0]);
+          return;
+        } else {
+          alert("Please select a PDF file.");
+          return;
+        }
+      } else {
+        await submitOrder(order, token);
+      }
+    });
+
+    async function submitOrder(order, token){
       try {
         const res = await fetch(API_URL + '/api/order', {
           method: 'POST',
@@ -326,7 +341,7 @@
         document.getElementById('orderMessage').textContent = "Order error: " + error.message;
         document.getElementById('orderMessage').className = "error";
       }
-    });
+    }
 
     // Load order history for the logged-in client.
     async function loadOrderHistory() {
