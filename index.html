@@ -55,6 +55,19 @@
           <select id="output" name="output"></select>
           <label for="quantity">Quantity:</label>
           <input type="number" id="quantity" name="quantity" value="1" min="1">
+          
+          <fieldset>
+            <legend>Print Option</legend>
+            <label><input type="radio" name="printOption" value="alreadyCreated" checked> Use Already Created Print</label>
+            <label><input type="radio" name="printOption" value="ownPrint"> Your Own Print</label>
+          </fieldset>
+          <div id="ownPrintFields" class="hidden">
+            <label for="pdfUrl">PDF URL (or Base64 string):</label>
+            <input type="text" id="pdfUrl" placeholder="Enter PDF URL">
+            <label for="printDescription">Print Description (Color or Black & White):</label>
+            <textarea id="printDescription" rows="3" placeholder="Enter print instructions"></textarea>
+          </div>
+
           <label for="rubric">Rubric Required:</label>
           <input type="checkbox" id="rubric" name="rubric">
           <div id="rubricCountContainer" class="hidden">
@@ -77,6 +90,7 @@
               <th>Output</th>
               <th>Quantity</th>
               <th>Rubric</th>
+              <th>Print Option</th>
               <th>Status</th>
               <th>Date</th>
             </tr>
@@ -90,7 +104,7 @@
   <script>
     const API_URL = 'https://print-order-worker.balgudeshubham64.workers.dev';
 
-    // Utility: Show/hide sections in auth and dashboard
+    // Utility: Show/hide sections.
     function showAuthSection(sectionId) {
       document.getElementById('registrationSection').classList.add('hidden');
       document.getElementById('loginSection').classList.add('hidden');
@@ -102,7 +116,7 @@
       document.getElementById(viewId).classList.remove('hidden');
     }
 
-    // Switch between registration and login in authSection
+    // Switch between registration and login.
     document.getElementById('showLoginLink').addEventListener('click', function(e) {
       e.preventDefault();
       showAuthSection('loginSection');
@@ -112,7 +126,7 @@
       showAuthSection('registrationSection');
     });
 
-    // Client Registration
+    // Client Registration.
     document.getElementById('clientRegistrationForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       const email = document.getElementById('clientEmailReg').value;
@@ -139,7 +153,7 @@
       }
     });
 
-    // Client Login
+    // Client Login.
     document.getElementById('clientLoginForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       const email = document.getElementById('clientEmailLogin').value;
@@ -170,7 +184,7 @@
       }
     });
 
-    // Client Logout
+    // Client Logout.
     document.getElementById('logoutBtn').addEventListener('click', function(){
       localStorage.removeItem('clientToken');
       document.getElementById('dashboardSection').classList.add('hidden');
@@ -178,7 +192,7 @@
       showAuthSection('loginSection');
     });
 
-    // Navigation in dashboard
+    // Dashboard Navigation.
     document.getElementById('orderFormBtn').addEventListener('click', function(){
       showDashboardView('orderFormView');
       loadSubjects();
@@ -188,7 +202,28 @@
       loadOrderHistory();
     });
 
-    // Load subjects for order form
+    // Toggle print option fields.
+    const printOptionRadios = document.getElementsByName('printOption');
+    for(let radio of printOptionRadios) {
+      radio.addEventListener('change', function() {
+        if(this.value === 'ownPrint') {
+          document.getElementById('ownPrintFields').classList.remove('hidden');
+        } else {
+          document.getElementById('ownPrintFields').classList.add('hidden');
+        }
+      });
+    }
+
+    // Toggle rubric count display on order form.
+    document.getElementById('rubric').addEventListener('change', function(e) {
+      if(e.target.checked) {
+        document.getElementById('rubricCountContainer').classList.remove('hidden');
+      } else {
+        document.getElementById('rubricCountContainer').classList.add('hidden');
+      }
+    });
+
+    // Load subjects for order form.
     async function loadSubjects() {
       try {
         const res = await fetch(API_URL + '/api/subjects');
@@ -207,7 +242,7 @@
       }
     }
 
-    // Load outputs for the selected subject
+    // Load outputs for the selected subject.
     async function loadOutputs(subject) {
       try {
         const res = await fetch(API_URL + '/api/outputs?subject=' + encodeURIComponent(subject));
@@ -228,7 +263,7 @@
       }
     }
 
-    // Calculate total payment
+    // Calculate total payment.
     function calculatePayment() {
       const outputSelect = document.getElementById('output');
       const selectedOption = outputSelect.options[outputSelect.selectedIndex];
@@ -243,7 +278,7 @@
       loadOutputs(e.target.value);
     });
 
-    // Submit order form
+    // Submit order form.
     document.getElementById('orderForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       const token = localStorage.getItem('clientToken');
@@ -251,12 +286,23 @@
         alert("Please log in first.");
         return;
       }
+      // Determine print option.
+      const printOption = document.querySelector('input[name="printOption"]:checked').value;
+      let pdfUrl = "";
+      let printDescription = "";
+      if(printOption === 'ownPrint') {
+        pdfUrl = document.getElementById('pdfUrl').value;
+        printDescription = document.getElementById('printDescription').value;
+      }
       const order = {
         subject: document.getElementById('subject').value,
         output: document.getElementById('output').value,
         quantity: parseInt(document.getElementById('quantity').value),
         rubric: document.getElementById('rubric').checked,
-        rubricCount: document.getElementById('rubric').checked ? parseInt(document.getElementById('rubricCount').value) : 0
+        rubricCount: document.getElementById('rubric').checked ? parseInt(document.getElementById('rubricCount').value) : 0,
+        printOption,
+        pdfUrl,
+        printDescription
       };
       try {
         const res = await fetch(API_URL + '/api/order', {
@@ -282,7 +328,7 @@
       }
     });
 
-    // Load order history for the logged-in client
+    // Load order history for the logged-in client.
     async function loadOrderHistory() {
       const token = localStorage.getItem('clientToken');
       try {
@@ -292,11 +338,11 @@
         const orders = await res.json();
         const tbody = document.querySelector('#orderHistoryTable tbody');
         tbody.innerHTML = "";
-        // Filter orders by client email (decoded from token)
         const email = atob(token);
         orders.filter(o => o.email === email).forEach(order => {
           const tr = document.createElement('tr');
-          const status = order.paymentReceived ? "Payment Completed" : "Payment Remaining";
+          const status = order.orderStatus === "payment_done" ? "Payment Completed" :
+                         order.orderStatus === "completed_payment_pending" ? "Order Completed - Payment Pending" : "Pending";
           const date = new Date(order.timestamp).toLocaleString();
           tr.innerHTML = `
             <td>${order.id}</td>
@@ -304,6 +350,7 @@
             <td>${order.output}</td>
             <td>${order.quantity}</td>
             <td>${order.rubric ? 'Yes' : 'No'}</td>
+            <td>${order.printOption || 'N/A'}</td>
             <td>${status}</td>
             <td>${date}</td>
           `;
@@ -314,8 +361,8 @@
       }
     }
 
-    // On page load, clear inputs if desired and check for login status.
     window.addEventListener('load', () => {
+      // Clear login inputs on load.
       document.getElementById('clientEmailLogin').value = "";
       document.getElementById('clientPasswordLogin').value = "";
     });
